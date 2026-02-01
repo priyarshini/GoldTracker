@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gold Tracker Pro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .card-summary {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .text-profit {
+            color: #198754;
+            font-weight: 700;
+        }
+
+        .text-loss {
+            color: #dc3545;
+            font-weight: 700;
+        }
+
+        .fw-medium {
+            font-weight: 500;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2 class="fw-bold text-dark">Gold Portfolio 🪙</h2>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary">User: <%= user %></span>
+
+                    <span class="text-muted">| Chennai Rate (24K)</span>
+                    <% if (isManual) { %>
+                        <span class="badge bg-secondary">Manual Mode</span>
+                        <% } else { %>
+                            <span class="badge bg-success">Auto Mode</span>
+                            <% } %>
+                </div>
+            </div>
+            <div class="text-end">
+                <% if (rate) { %>
+                    <h3 class="fw-bold text-warning mb-0">₹<%= rate.toLocaleString() %>/g</h3>
+                    <% } else { %>
+                        <h3 class="fw-bold text-secondary mb-0">Unavailable</h3>
+                        <% } %>
+
+                            <div class="mt-2">
+                                <button class="btn btn-sm btn-outline-dark" data-bs-toggle="modal"
+                                    data-bs-target="#settingsModal">
+                                    ⚙️ Mode
+                                </button>
+                                <a href="/logout" class="btn btn-sm btn-outline-danger ms-1">Logout</a>
+                            </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-5">
+            <div class="col-md-4">
+                <div class="card card-summary p-3">
+                    <span class="text-muted small text-uppercase fw-bold">Total Investment</span>
+                    <h3 class="mt-2">₹<%= totalInvested.toLocaleString('en-IN') %>
+                    </h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-summary p-3">
+                    <span class="text-muted small text-uppercase fw-bold">Current Value</span>
+                    <h3 class="mt-2">₹<%= totalCurrentValue.toLocaleString('en-IN') %>
+                    </h3>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-summary p-3 <%= totalPL >= 0 ? 'bg-success-subtle' : 'bg-danger-subtle' %>">
+                    <span class="text-dark small text-uppercase fw-bold">Net Profit / Loss</span>
+                    <h3 class="mt-2 <%= totalPL >= 0 ? 'text-success' : 'text-danger' %>">
+                        <%= totalPL>= 0 ? '+' : '' %>₹<%= totalPL.toLocaleString('en-IN') %>
+                    </h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="fw-bold">Your Holdings</h5>
+            <button class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#addModal">
+                <i class="bi bi-plus-lg"></i> Add Purchase
+            </button>
+        </div>
+
+        <div class="card card-summary p-0 overflow-hidden">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th class="ps-4">Date</th>
+                        <th>Weight</th>
+                        <th>Price/Gram</th>
+                        <th>Total Cost</th>
+                        <th>Current Value</th>
+                        <th>Profit/Loss</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (holdings.length===0) { %>
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">No gold added yet.</td>
+                        </tr>
+                        <% } %>
+
+                            <% holdings.forEach(h=> { %>
+                                <tr>
+                                    <td class="ps-4 text-muted small">
+                                        <%= h.date %>
+                                    </td>
+                                    <td class="fw-bold">
+                                        <%= h.grams %>g
+                                    </td>
+                                    <td class="text-muted">₹<%= h.buyPrice.toLocaleString() %>
+                                    </td>
+                                    <td class="fw-medium">₹<%= h.totalCost.toLocaleString('en-IN') %>
+                                    </td>
+                                    <td>₹<%= h.currentValue.toLocaleString('en-IN') %>
+                                    </td>
+                                    <td>
+                                        <span class="<%= h.profitLoss >= 0 ? 'text-profit' : 'text-loss' %>">
+                                            <%= h.profitLoss>= 0 ? '+' : '' %><%= h.profitLoss.toLocaleString('en-IN')
+                                                    %>
+                                        </span>
+                                    </td>
+                                    <td class="text-end pe-4">
+                                        <button class="btn btn-sm btn-outline-primary action-btn me-1"
+                                            onclick="openEditModal('<%= h.id %>', '<%= h.grams %>', '<%= h.buyPrice %>', '<%= h.date %>')"
+                                            title="Edit">
+                                            <i class="bi bi-pencil-fill"></i>
+                                        </button>
+
+                                        <form action="/delete/<%= h.id %>" method="POST" style="display:inline;">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger action-btn"
+                                                title="Delete">
+                                                <i class="bi bi-trash-fill"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                <% }) %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="modal fade" id="addModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Add New Purchase</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form action="/add" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Weight (Grams)</label>
+                            <input type="number" step="0.01" name="grams" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Purchase Price (Per Gram)</label>
+                            <input type="number" name="price" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-dark">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Edit Purchase</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form id="editForm" method="POST">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Date</label>
+                            <input type="date" id="editDate" name="date" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Weight (Grams)</label>
+                            <input type="number" step="0.01" id="editGrams" name="grams" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Purchase Price (Per Gram)</label>
+                            <input type="number" id="editPrice" name="price" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="settingsModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">⚙️ Rate Settings</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form action="/set-manual" method="POST" class="mb-4">
+                        <label class="form-label fw-bold">Option 1: Set Manual Rate</label>
+                        <div class="input-group">
+                            <input type="number" name="rate" class="form-control" placeholder="e.g. 16250" required>
+                            <button class="btn btn-primary" type="submit">Use Manual Rate</button>
+                        </div>
+                    </form>
+                    <hr>
+                    <div class="mt-3">
+                        <label class="form-label fw-bold">Option 2: Automatic Mode</label>
+                        <a href="/set-auto" class="btn btn-outline-success w-100">🔄 Switch to Auto Mode</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        function openEditModal(id, grams, price, dateStr) {
+            document.getElementById('editGrams').value = grams;
+            document.getElementById('editPrice').value = price;
+
+            // CONVERT DATE: "DD/MM/YYYY" -> "YYYY-MM-DD" for the HTML Input
+            if (dateStr) {
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    // Ensure format matches HTML input requirement (YYYY-MM-DD)
+                    const isoDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    document.getElementById('editDate').value = isoDate;
+                }
+            }
+
+            document.getElementById('editForm').action = '/edit/' + id;
+
+            var editModal = new bootstrap.Modal(document.getElementById('editModal'));
+            editModal.show();
+        }
+    </script>
+
+</body>
+
+</html>
